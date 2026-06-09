@@ -12,52 +12,32 @@ Reusable shell script, here's a complete node bootstrap script that can be used 
 Save as `k8s-node-setup.sh`.
 
 #!/bin/bash
-
 set -e
-
 echo "========== Kubernetes Node Bootstrap =========="
 
-#---------------------------------------------------
 
 # Update OS
-
 #---------------------------------------------------
 apt-get update
 apt-get upgrade -y
 
-#---------------------------------------------------
+
 
 # Host Entries
-
 #---------------------------------------------------
 cat > /etc/hosts <<EOF
-127.0.0.1 localhost
-127.0.1.1 ubuntu
-
-::1 ip6-localhost ip6-loopback
-fe00::0 ip6-localnet
-ff00::0 ip6-mcastprefix
-ff02::1 ip6-allnodes
-ff02::2 ip6-allrouters
-
 192.168.65.200 c2-k8s-master
 192.168.65.201 c2-k8s-worker1
 192.168.65.202 c2-k8s-worker2
 EOF
 
-#---------------------------------------------------
 
 # Disable Swap
-
 #---------------------------------------------------
 swapoff -a
-
-sed -i '/swap.img/s/^/#/' /etc/fstab
-
-#---------------------------------------------------
+sudo sed -i '/swap*/s/^/#/' /etc/fstab
 
 # Kernel Modules
-
 #---------------------------------------------------
 cat <<EOF >/etc/modules-load.d/k8s.conf
 overlay
@@ -67,10 +47,8 @@ EOF
 modprobe overlay
 modprobe br_netfilter
 
-#---------------------------------------------------
 
 # Sysctl Parameters
-
 #---------------------------------------------------
 cat <<EOF >/etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables=1
@@ -80,37 +58,28 @@ EOF
 
 sysctl --system
 
-#---------------------------------------------------
 
 # Required Packages
-
 #---------------------------------------------------
-apt-get install -y 
-curl 
-wget 
-gnupg2 
-apt-transport-https 
-ca-certificates 
-software-properties-common
+sudo apt update
+sudo apt install -y curl wget gnupg2 software-properties-common apt-transport-https ca-certificates
 
-#---------------------------------------------------
+
 
 # Containerd
-
 #---------------------------------------------------
-apt-get install -y containerd
+sudo apt install -y containerd
+containerd --version
 
-mkdir -p /etc/containerd
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
 
-containerd config default > /etc/containerd/config.toml
-
-sed -i 
-'s/SystemdCgroup = false/SystemdCgroup = true/' 
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' \
 /etc/containerd/config.toml
 
-systemctl daemon-reload
-systemctl enable containerd
-systemctl restart containerd
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+sudo systemctl status containerd
 
 #---------------------------------------------------
 
@@ -124,20 +93,17 @@ curl -fsSL [https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key](https://pkg
 -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] [https://pkgs.k8s.io/core:/stable:/v1.33/deb/](https://pkgs.k8s.io/core:/stable:/v1.33/deb/) /" \
-
 > /etc/apt/sources.list.d/kubernetes.list
 
 apt-get update
 
-#---------------------------------------------------
+kubeadm version
+kubectl version --client
 
 # Kubernetes Components
-
 #---------------------------------------------------
 apt-get install -y kubelet kubeadm kubectl
-
 apt-mark hold kubelet kubeadm kubectl
-
 systemctl enable kubelet
 
 echo ""
