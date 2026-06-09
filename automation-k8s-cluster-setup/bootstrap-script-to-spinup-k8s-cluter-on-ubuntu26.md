@@ -1,4 +1,4 @@
-Since you want a reusable shell script, here's a complete node bootstrap script that can be used on **Ubuntu 26.04** for both master and worker nodes. It:
+Reusable shell script, here's a complete node bootstrap script that can be used on **Ubuntu 26.04** for both master and worker nodes. It:
 
 * Disables swap
 * Configures kernel modules
