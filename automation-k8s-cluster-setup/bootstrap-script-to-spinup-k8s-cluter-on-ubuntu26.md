@@ -16,13 +16,13 @@ set -e
 echo "========== Kubernetes Node Bootstrap =========="
 
 
-# Update OS
+## Update OS
 apt-get update
 apt-get upgrade -y
 
 
 
-# Host Entries
+## Host Entries
 cat > /etc/hosts <<EOF
 192.168.65.200 c2-k8s-master
 192.168.65.201 c2-k8s-worker1
@@ -30,11 +30,11 @@ cat > /etc/hosts <<EOF
 EOF
 
 
-# Disable Swap
+## Disable Swap
 swapoff -a
 sudo sed -i '/swap*/s/^/#/' /etc/fstab
 
-# Kernel Modules
+## Kernel Modules
 cat <<EOF >/etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
@@ -44,7 +44,7 @@ modprobe overlay
 modprobe br_netfilter
 
 
-# Sysctl Parameters
+## Sysctl Parameters
 cat <<EOF >/etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-ip6tables=1
 net.bridge.bridge-nf-call-iptables=1
@@ -54,13 +54,13 @@ EOF
 sysctl --system
 
 
-# Required Packages
+## Required Packages
 sudo apt update
 sudo apt install -y curl wget gnupg2 software-properties-common apt-transport-https ca-certificates
 
 
 
-# Containerd
+## Containerd
 sudo apt install -y containerd
 containerd --version
 
@@ -75,7 +75,7 @@ sudo systemctl enable containerd
 sudo systemctl status containerd
 
 
-# Kubernetes Repository
+## Kubernetes Repository
 mkdir -p /etc/apt/keyrings
 
 curl -fsSL [https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key](https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key) 
@@ -90,7 +90,7 @@ apt-get update
 kubeadm version
 kubectl version --client
 
-# Kubernetes Components
+## Kubernetes Components
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl
 systemctl enable kubelet
