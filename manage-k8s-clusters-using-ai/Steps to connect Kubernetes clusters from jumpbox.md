@@ -247,7 +247,7 @@ kubectl --kubeconfig ~/.kube/dev-config get nodes
 kubectl --kubeconfig ~/.kube/dev-config get pods -A
 kubectl --kubeconfig ~/.kube/dev-config get events -A
 kubectl --kubeconfig ~/.kube/dev-config top nodes
-
+```
 
 ## Better approach for your AI K8s Manager
 
