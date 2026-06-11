@@ -247,6 +247,84 @@ kubectl --kubeconfig ~/.kube/dev-config get nodes
 kubectl --kubeconfig ~/.kube/dev-config get pods -A
 kubectl --kubeconfig ~/.kube/dev-config get events -A
 kubectl --kubeconfig ~/.kube/dev-config top nodes
+
+
+## Better approach for your AI K8s Manager
+
+Instead of embedding a temporary token in `ai-k8s-manager.kubeconfig`, use one of these:
+
+### Option 1: Use a ServiceAccount token Secret (long-lived)
+
+Create a secret manually:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ai-k8s-manager-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: ai-k8s-manager
+type: kubernetes.io/service-account-token
+```
+
+Apply:
+
+```bash
+kubectl apply -f sa-token-secret.yaml
+```
+
+Get the token:
+
+```bash
+kubectl get secret ai-k8s-manager-token \
+  -n kube-system \
+  -o jsonpath='{.data.token}' | base64 -d
+```
+
+Use this token in your kubeconfig.
+
+This token typically remains valid until:
+
+* the ServiceAccount is deleted,
+* the Secret is deleted,
+* or cluster signing keys change.
+
+---
+
+### Option 2: Use a kubeconfig generated from a client certificate
+
+For production automation, certificate-based authentication is generally preferred over static tokens.
+
+---
+
+### Option 3: Dynamic token generation in your Streamlit app
+
+Since you're building an AI Kubernetes management platform, a common pattern is:
+
+1. Store an admin kubeconfig securely on the jumpbox.
+2. When the application starts:
+
+   * Generate a fresh token:
+
+     ```bash
+     kubectl create token ai-k8s-manager -n kube-system
+     ```
+3. Build the Kubernetes client configuration dynamically.
+4. Refresh the token before it expires.
+
+This avoids manual kubeconfig updates.
+
+---
+
+For your **"manage-k8s-clusters-using-ai"** Streamlit project, I recommend:
+
+* Create a dedicated ServiceAccount (`ai-k8s-manager`).
+* Bind it to a least-privilege ClusterRole (your `ai-k8s-readonly` role is a good start).
+* Create a `kubernetes.io/service-account-token` Secret and use that token in the application's kubeconfig.
+
+That will prevent the recurring `Unauthorized` errors caused by expiring tokens.
+
 kubectl --kubeconfig ~/.kube/dev-config top pods -A
 ```
 
